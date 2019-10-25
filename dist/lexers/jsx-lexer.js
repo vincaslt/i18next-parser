@@ -24,6 +24,9 @@ JsxLexer = function (_JavascriptLexer) {_inherits(JsxLexer, _JavascriptLexer);
             break;
           case ts.SyntaxKind.JsxSelfClosingElement:
             entry = _this2.jsxExtractor.call(_this2, node, content);
+            break;
+          case ts.SyntaxKind.TaggedTemplateExpression:
+            entry = _this2.tagExpressionExtractor.call(_this2, node);
             break;}
 
 

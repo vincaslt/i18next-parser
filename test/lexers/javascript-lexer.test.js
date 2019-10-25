@@ -3,6 +3,22 @@ import { assert } from 'chai'
 import JavascriptLexer from '../../src/lexers/javascript-lexer'
 
 describe('JavascriptLexer', () => {
+  it("extracts keys from tagged templates", done => {
+    const Lexer = new JavascriptLexer();
+    const content = "i18n.t`first`";
+    assert.deepEqual(Lexer.extract(content), [{ key: "first" }]);
+    done();
+  });
+
+  it("extracts interpolated values from tagged templates", done => {
+    const Lexer = new JavascriptLexer();
+    const content = "i18n.t`text${{value}}text${value}text${(expr(0))}`";
+    assert.deepEqual(Lexer.extract(content), [
+      { key: "text{{value}}text{{k_1}}text{{k_2}}" }
+    ]);
+    done();
+  });
+
   it('extracts keys from translation components', (done) => {
     const Lexer = new JavascriptLexer()
     const content = 'i18n.t("first")'
@@ -14,43 +30,63 @@ describe('JavascriptLexer', () => {
     const Lexer = new JavascriptLexer()
     const content = 'i18n.t("first", "bla")'
     assert.deepEqual(Lexer.extract(content), [
-      { key: 'first', defaultValue: 'bla' }
-    ])
-    done()
-  })
+      { key: "text{{value}}text{{k_1}}text{{k_2}}" }
+    ]);
+    done();
+  });
 
-  it('extracts the defaultValue/context options', (done) => {
-    const Lexer = new JavascriptLexer()
-    const content = 'i18n.t("first", {defaultValue: "foo", context: \'bar\'})'
-    assert.deepEqual(Lexer.extract(content), [
-      { key: 'first', defaultValue: 'foo', context: 'bar' }
-    ])
-    done()
-  })
+  it("extracts keys from translation components", done => {
+    const Lexer = new JavascriptLexer();
+    const content = 'i18n.t("first")';
+    assert.deepEqual(Lexer.extract(content), [{ key: "first" }]);
+    done();
+  });
 
-  it('extracts the defaultValue/context on multiple lines', (done) => {
-    const Lexer = new JavascriptLexer()
-    const content = 'i18n.t("first", {\ndefaultValue: "foo",\n context: \'bar\'})'
+  it("extracts the second argument as defaultValue", done => {
+    const Lexer = new JavascriptLexer();
+    const content = 'i18n.t("first", "bla")';
     assert.deepEqual(Lexer.extract(content), [
-      { key: 'first', defaultValue: 'foo', context: 'bar' }
-    ])
-    done()
-  })
+      { key: "first", defaultValue: "bla" }
+    ]);
+    done();
+  });
 
-  it('extracts the defaultValue/context options with quotation marks', (done) => {
-    const Lexer = new JavascriptLexer()
-    const content = 'i18n.t("first", {context: "foo", "defaultValue": \'bla\'})'
+  it("extracts the defaultValue/context options", done => {
+    const Lexer = new JavascriptLexer();
+    const content = 'i18n.t("first", {defaultValue: "foo", context: \'bar\'})';
     assert.deepEqual(Lexer.extract(content), [
-      { key: 'first', defaultValue: 'bla', context: 'foo' }
-    ])
-    done()
-  })
+      { key: "first", defaultValue: "foo", context: "bar" }
+    ]);
+    done();
+  });
 
-  it('extracts the defaultValue/context options with interpolated value', (done) => {
-    const Lexer = new JavascriptLexer()
-    const content = 'i18n.t("first", {context: "foo", "defaultValue": \'{{var}} bla\'})'
+  it("extracts the defaultValue/context on multiple lines", done => {
+    const Lexer = new JavascriptLexer();
+    const content =
+      'i18n.t("first", {\ndefaultValue: "foo",\n context: \'bar\'})';
     assert.deepEqual(Lexer.extract(content), [
-      { key: 'first', defaultValue: '{{var}} bla', context: 'foo' }
+      { key: "first", defaultValue: "foo", context: "bar" }
+    ]);
+    done();
+  });
+
+  it("extracts the defaultValue/context options with quotation marks", done => {
+    const Lexer = new JavascriptLexer();
+    const content =
+      'i18n.t("first", {context: "foo", "defaultValue": \'bla\'})';
+    assert.deepEqual(Lexer.extract(content), [
+      { key: "first", defaultValue: "bla", context: "foo" }
+    ]);
+    done();
+  });
+
+  it("extracts the defaultValue/context options with interpolated value", done => {
+    const Lexer = new JavascriptLexer();
+    const content =
+      'i18n.t("first", {context: "foo", "defaultValue": \'{{var}} bla\'})';
+    assert.deepEqual(Lexer.extract(content), [
+      { key: 'first' },
+      { key: 'second' }
     ])
     done()
   })

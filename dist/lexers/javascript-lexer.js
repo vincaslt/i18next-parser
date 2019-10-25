@@ -15,9 +15,14 @@ JavascriptLexer = function (_BaseLexer) {_inherits(JavascriptLexer, _BaseLexer);
       var parseTree = function parseTree(node) {
         var entry = void 0;
 
-        if (node.kind === ts.SyntaxKind.CallExpression) {
-          entry = _this2.expressionExtractor.call(_this2, node);
-        }
+        switch (node.kind) {
+          case ts.SyntaxKind.CallExpression:
+            entry = _this2.expressionExtractor.call(_this2, node);
+            break;
+          case ts.SyntaxKind.TaggedTemplateExpression:
+            entry = _this2.tagExpressionExtractor.call(_this2, node);
+            break;}
+
 
         if (entry) {
           keys.push(entry);
@@ -38,7 +43,6 @@ JavascriptLexer = function (_BaseLexer) {_inherits(JavascriptLexer, _BaseLexer);
       var isTranslationFunction =
       node.expression.text && this.functions.includes(node.expression.text) ||
       node.expression.name && this.functions.includes(node.expression.name.text);
-
 
       if (isTranslationFunction) {
         var keyArgument = node.arguments.shift();
@@ -89,6 +93,47 @@ JavascriptLexer = function (_BaseLexer) {_inherits(JavascriptLexer, _BaseLexer);
 
       if (node.expression.escapedText === 'useTranslation' && node.arguments.length) {
         this.defaultNamespace = node.arguments[0].text;
+      }
+
+      return null;
+    } }, { key: 'tagExpressionExtractor', value: function tagExpressionExtractor(
+
+    node) {
+      var translationFnName =
+      node.tag && (node.tag.text || node.tag.name && node.tag.name.text);
+
+      var isTagTranslationFunction =
+      translationFnName && this.functions.includes(translationFnName);
+
+      if (!isTagTranslationFunction) {
+        return;
+      }
+
+      var getI18nIdentifier = function getI18nIdentifier(expression, i) {
+        switch (expression.kind) {
+          case ts.SyntaxKind.ObjectLiteralExpression:
+            return expression.properties[0].name.text;
+          case ts.SyntaxKind.StringLiteral:
+            return expression.text;
+          default:
+            return 'k_' + i;}
+
+      };
+
+      var template = node.template;
+
+      if (template) {
+        var i18nKey = template.text;
+
+        if (i18nKey === undefined) {
+          i18nKey = template.templateSpans.reduce(
+          function (key, _ref, i) {var expression = _ref.expression,literal = _ref.literal;return (
+              key + ('{{' + getI18nIdentifier(expression, i) + '}}') + literal.text);},
+          template.head.text);
+
+        }
+
+        return { key: i18nKey };
       }
 
       return null;

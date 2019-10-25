@@ -61,7 +61,7 @@ export default class Parser extends EventEmitter {
         lexerName = lexerConfig.lexer
         lexerOptions = lexerConfig
       }
-
+      
       if (!lexersMap[lexerName]) {
         this.emit('error', new Error(`Lexer '${lexerName}' does not exist`))
       }

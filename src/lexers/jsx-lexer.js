@@ -4,7 +4,7 @@ import * as ts from 'typescript'
 export default class JsxLexer extends JavascriptLexer {
   constructor(options = {}) {
     super(options)
-    
+
     this.transSupportBasicHtmlNodes = options.transSupportBasicHtmlNodes || false
     this.transKeepBasicHtmlNodesFor = options.transKeepBasicHtmlNodesFor || ['br', 'strong', 'i', 'p']
   }
@@ -24,6 +24,9 @@ export default class JsxLexer extends JavascriptLexer {
           break
         case ts.SyntaxKind.JsxSelfClosingElement:
           entry = this.jsxExtractor.call(this, node, content)
+          break
+        case ts.SyntaxKind.TaggedTemplateExpression:
+          entry = this.tagExpressionExtractor.call(this, node)
           break
       }
 
@@ -82,15 +85,15 @@ export default class JsxLexer extends JavascriptLexer {
     const children = this.parseChildren.call(this, node.children, sourceText)
 
     const elemsToString = (children) => children.map((child, index) => {
-      switch(child.type) {
+      switch (child.type) {
         case 'js':
         case 'text':
           return child.content
         case 'tag':
           const elementName =
             child.isBasic &&
-            this.transSupportBasicHtmlNodes &&
-            this.transKeepBasicHtmlNodesFor.includes(child.name)
+              this.transSupportBasicHtmlNodes &&
+              this.transKeepBasicHtmlNodesFor.includes(child.name)
               ? child.name
               : index
           return `<${elementName}>${elemsToString(child.children)}</${elementName}>`
@@ -128,7 +131,7 @@ export default class JsxLexer extends JavascriptLexer {
             content: ''
           }
         }
-        
+
         else if (child.expression.kind === ts.SyntaxKind.StringLiteral) {
           return {
             type: 'text',

@@ -15,8 +15,13 @@ export default class JavascriptLexer extends BaseLexer {
     const parseTree = (node) => {
       let entry
 
-      if (node.kind === ts.SyntaxKind.CallExpression) {
-        entry = this.expressionExtractor.call(this, node)
+      switch (node.kind) {
+        case ts.SyntaxKind.CallExpression:
+          entry = this.expressionExtractor.call(this, node)
+          break
+        case ts.SyntaxKind.TaggedTemplateExpression:
+          entry = this.tagExpressionExtractor.call(this, node)
+          break
       }
 
       if (entry) {
@@ -38,7 +43,6 @@ export default class JavascriptLexer extends BaseLexer {
     const isTranslationFunction =
       (node.expression.text && this.functions.includes(node.expression.text)) ||
       (node.expression.name && this.functions.includes(node.expression.name.text))
-
 
     if (isTranslationFunction) {
       const keyArgument = node.arguments.shift()
@@ -89,6 +93,47 @@ export default class JavascriptLexer extends BaseLexer {
 
     if(node.expression.escapedText === 'useTranslation' && node.arguments.length) {
       this.defaultNamespace = node.arguments[0].text
+    }
+
+    return null
+  }
+
+  tagExpressionExtractor(node) {
+    const translationFnName =
+      node.tag && (node.tag.text || (node.tag.name && node.tag.name.text));
+
+    const isTagTranslationFunction =
+      translationFnName && this.functions.includes(translationFnName);
+
+    if (!isTagTranslationFunction) {
+      return;
+    }
+
+    const getI18nIdentifier = (expression, i) => {
+      switch (expression.kind) {
+        case ts.SyntaxKind.ObjectLiteralExpression:
+          return expression.properties[0].name.text;
+        case ts.SyntaxKind.StringLiteral:
+          return expression.text;
+        default:
+          return `k_${i}`;
+      }
+    };
+
+    const template = node.template;
+
+    if (template) {
+      let i18nKey = template.text
+
+      if (i18nKey === undefined) {
+        i18nKey = template.templateSpans.reduce(
+          (key, { expression, literal }, i) =>
+            key + `{{${getI18nIdentifier(expression, i)}}}` + literal.text,
+          template.head.text
+        )
+      }
+
+      return { key: i18nKey };
     }
 
     return null
