@@ -26,15 +26,6 @@ describe('JavascriptLexer', () => {
     done()
   })
 
-  it('extracts the second argument as defaultValue', (done) => {
-    const Lexer = new JavascriptLexer()
-    const content = 'i18n.t("first", "bla")'
-    assert.deepEqual(Lexer.extract(content), [
-      { key: "text{{value}}text{{k_1}}text{{k_2}}" }
-    ]);
-    done();
-  });
-
   it("extracts keys from translation components", done => {
     const Lexer = new JavascriptLexer();
     const content = 'i18n.t("first")';
@@ -85,8 +76,7 @@ describe('JavascriptLexer', () => {
     const content =
       'i18n.t("first", {context: "foo", "defaultValue": \'{{var}} bla\'})';
     assert.deepEqual(Lexer.extract(content), [
-      { key: 'first' },
-      { key: 'second' }
+      { key: 'first', defaultValue: '{{var}} bla', context: 'foo' }
     ])
     done()
   })
